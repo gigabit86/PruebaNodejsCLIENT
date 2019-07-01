@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Cliente</title>
+
+  <style>
+    .chat-form {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <form class="username-form" method="post" action="">
+    <input id="email" type="text" value="SAMUELANDRES@GMAIL.COM" />
+    <input id="password" type="password" value="password" />
+    <input type="submit" value="Iniciar" />
+  </form>
+
+  <form class="chat-form" method="post" action="">
+    <div>Bienvenido, <span id="nombresapellido">....</span><br> Empresa:<span id="empresa">....</span></div>
+    <br><br>
+    <label>MENSAJE: </label><br />
+    <textarea id="message"></textarea>
+    <input type="submit" value="Enviar" />
+    <ul id="messages">
+    </ul>
+  </form>
+
+  <script src="js/jquery-1.9.1.min.js"></script>
+  <script src="js/socket.io.slim.js"></script>
+  <script>
+    var socket = io.connect('http://localhost:3001');
+
+    var email = "";
+    var token = "00000000000";
+    var empresa = "00000000000";
+
+    $(".username-form").on("submit", function () {
+      email = $(this).children("#email").val();
+      password = $(this).children("#password").val();
+      socket.emit('login', { "email": email, password: password });
+      return false;
+    });
+
+
+    socket.on("login", function (data) {
+      if (data.token) {
+        token = data.token;
+        console.log(data.token);
+        $(".username-form").hide();
+        $("#nombresapellido").html(data.nombresapellido);
+        $("#empresa").html(data.empresa);
+        $(".chat-form").show();
+
+        socket.on(empresa, function (data) {
+          console.log(data);
+        });
+
+      } else {
+        $(".chat-form").hide();
+        $(".username-form").show();
+        console.log(data);
+      }
+
+    });
+
+    var chat_form = $(".chat-form");
+    chat_form.on("submit", function () {
+      socket.emit("private-message", {
+        "username": $(this).find("input:first").val(),
+        "content": $(this).find("textarea").val()
+      });
+      $(this).find("textarea").val('');
+      return false;
+    });
+
+
+    socket.on("message", function (data) {
+      $("#messages").prepend("<li>" + data.de.nombresapellido + ":" + data.content);
+    });
+
+
+  </script>
+</body>
+
+</html>
